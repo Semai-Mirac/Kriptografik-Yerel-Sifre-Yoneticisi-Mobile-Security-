@@ -51,9 +51,35 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   }
 
   void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
-      (_) => false,
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueAccent),
+            SizedBox(width: 10),
+            Text('Çıkış Yapılıyor'),
+          ],
+        ),
+        content: const Text('Çıkış yapmak üzeresiniz, emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(), // Uyarıyı kapatır (Vazgeç)
+            child: const Text('Vazgeçtim'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Uyarıyı kapat
+              // Giriş ekranına yönlendir ve geçmişi temizle
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
+                (_) => false,
+              );
+            },
+            child: const Text('Devam Et'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -257,6 +283,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 }
+
+
 
 
 
