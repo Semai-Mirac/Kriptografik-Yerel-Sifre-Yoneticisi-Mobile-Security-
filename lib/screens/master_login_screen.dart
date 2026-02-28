@@ -543,6 +543,12 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
                                 borderRadius: BorderRadius.all(Radius.circular(14)),
                               ),
                             ),
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) {
+                              if (!_isChecking) {
+                                _login();
+                              }
+                            },
                             obscureText: true,
                           ),
                         ),
