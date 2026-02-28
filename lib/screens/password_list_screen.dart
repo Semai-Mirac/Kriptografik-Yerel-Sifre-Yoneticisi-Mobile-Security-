@@ -1,9 +1,7 @@
-﻿import 'dart:convert';
+﻿import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import '../constants/storage_keys.dart';
+import '../helpers/backup_helper.dart';
+import '../helpers/database_helper.dart';
 import '../helpers/security_helper.dart';
 import '../models/password_entry.dart';
 import 'add_password_screen.dart';
@@ -18,8 +16,16 @@ class PasswordListScreen extends StatefulWidget {
 }
 
 class _PasswordListScreenState extends State<PasswordListScreen> {
+  static const List<String> _categoryOrder = [
+    'Sosyal Medya',
+    'İş',
+    'Kişisel',
+    'Diğer',
+  ];
+
   final List<PasswordEntry> _entries = [];
   bool _isLoading = true;
+  bool _isBackingUp = false;
 
   @override
   void initState() {
@@ -28,33 +34,53 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   }
 
   Future<void> _loadEntries() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(kEntriesStorageKey);
-
-    if (raw != null && raw.isNotEmpty) {
-      final decoded = jsonDecode(raw) as List<dynamic>;
-      _entries
-        ..clear()
-        ..addAll(
-          decoded
-              .map((item) => PasswordEntry.fromMap(item as Map<String, dynamic>))
-              .toList(),
-        );
-    }
+    final items = await DatabaseHelper.instance.getEntries();
 
     if (!mounted) {
       return;
     }
 
     setState(() {
+      _entries
+        ..clear()
+        ..addAll(items);
       _isLoading = false;
     });
   }
 
-  Future<void> _persistEntries() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = jsonEncode(_entries.map((entry) => entry.toMap()).toList());
-    await prefs.setString(kEntriesStorageKey, raw);
+  Future<void> _backupToCloud() async {
+    if (_isBackingUp) {
+      return;
+    }
+
+    setState(() {
+      _isBackingUp = true;
+    });
+
+    try {
+      await BackupHelper.uploadEncryptedBackup(
+        masterPassword: widget.masterPassword,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yedek Google Drive hesabına yüklendi.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Yedekleme başarısız: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBackingUp = false;
+        });
+      }
+    }
   }
 
   Future<void> _goToAddForm() async {
@@ -65,10 +91,24 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
 
     if (newEntry != null) {
-      setState(() {
-        _entries.add(newEntry);
-      });
-      await _persistEntries();
+      await DatabaseHelper.instance.insertEntry(newEntry);
+      await _loadEntries();
+    }
+  }
+
+  Future<void> _goToEditForm(PasswordEntry entry) async {
+    final updated = await Navigator.of(context).push<PasswordEntry>(
+      MaterialPageRoute(
+        builder: (_) => AddPasswordScreen(
+          masterPassword: widget.masterPassword,
+          initialEntry: entry,
+        ),
+      ),
+    );
+
+    if (updated != null) {
+      await DatabaseHelper.instance.updateEntry(updated);
+      await _loadEntries();
     }
   }
 
@@ -83,7 +123,17 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: Text(entry.title),
-          content: Text('Gerçek şifre: $realPassword'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Kategori: ${entry.category}'),
+              const SizedBox(height: 8),
+              Text('Kullanıcı adı: ${entry.username}'),
+              const SizedBox(height: 8),
+              Text('Gerçek şifre: $realPassword'),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -99,28 +149,84 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     }
   }
 
+  List<Widget> _buildSectionedList() {
+    final grouped = <String, List<PasswordEntry>>{};
+    for (final entry in _entries) {
+      grouped.putIfAbsent(entry.category, () => []).add(entry);
+    }
+
+    final unknownCategories = grouped.keys
+        .where((category) => !_categoryOrder.contains(category))
+        .toList()
+      ..sort();
+
+    final orderedCategories = <String>[..._categoryOrder, ...unknownCategories]
+        .where((category) => grouped[category]?.isNotEmpty == true)
+        .toList();
+
+    final widgets = <Widget>[];
+
+    for (final category in orderedCategories) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            category,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      );
+
+      for (final entry in grouped[category]!) {
+        widgets.add(
+          ListTile(
+            title: Text(entry.title),
+            subtitle: Text('${entry.username} • ******'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility),
+                  onPressed: () => _showRealPassword(entry),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _goToEditForm(entry),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Şifreler')),
+      appBar: AppBar(
+        title: const Text('Şifreler'),
+        actions: [
+          IconButton(
+            onPressed: _isBackingUp ? null : _backupToCloud,
+            icon: _isBackingUp
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.cloud_upload),
+            tooltip: 'Google Drive yedekle',
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _entries.isEmpty
               ? const Center(child: Text('Henüz kayıt yok.'))
-              : ListView.builder(
-                  itemCount: _entries.length,
-                  itemBuilder: (context, index) {
-                    final entry = _entries[index];
-                    return ListTile(
-                      title: Text(entry.title),
-                      subtitle: const Text('******'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.visibility),
-                        onPressed: () => _showRealPassword(entry),
-                      ),
-                    );
-                  },
-                ),
+              : ListView(children: _buildSectionedList()),
       floatingActionButton: FloatingActionButton(
         onPressed: _goToAddForm,
         child: const Icon(Icons.add),

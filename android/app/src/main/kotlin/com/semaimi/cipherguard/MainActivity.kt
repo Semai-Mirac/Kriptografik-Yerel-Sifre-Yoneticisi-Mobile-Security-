@@ -1,4 +1,4 @@
-package com.example.mobil_guvenlik
+﻿package com.semaimi.cipherguard
 
 import io.flutter.embedding.android.FlutterActivity
 

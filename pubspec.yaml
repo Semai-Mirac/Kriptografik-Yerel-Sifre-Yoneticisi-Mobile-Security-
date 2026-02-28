@@ -10,15 +10,30 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  shared_preferences: ^2.5.3
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  encrypt: ^5.0.3
+  crypto: ^3.0.6
+  google_sign_in: ^6.3.0
+  googleapis: ^13.2.0
+  http: ^1.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
     - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/Uygulama_resmi.png
+  adaptive_icon_background: '#000000'
+  adaptive_icon_foreground: assets/images/Uygulama_resmi.png
+  min_sdk_android: 21

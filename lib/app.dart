@@ -7,10 +7,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const borealisBackground = Color(0xFF050B16);
+    const borealisSurface = Color(0xFF0A1424);
+    const borealisPrimary = Color(0xFF4FE3C1);
+    const borealisSecondary = Color(0xFF8B7CFF);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Local Password Manager',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      title: 'CipherGuard',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: borealisBackground,
+        colorScheme: const ColorScheme.dark(
+          primary: borealisPrimary,
+          secondary: borealisSecondary,
+          surface: borealisSurface,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: borealisSurface,
+          foregroundColor: Colors.white,
+        ),
+        cardColor: borealisSurface,
+      ),
       home: const SplashScreen(),
     );
   }

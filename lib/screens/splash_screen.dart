@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../constants/asset_paths.dart';
+import '../widgets/borealis_animated_background.dart';
 import 'master_login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,80 +12,38 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<double> _scaleAnimation;
+class _SplashScreenState extends State<SplashScreen> {
+  late final DateTime _backgroundAnchor;
 
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.92, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-
-    _controller.forward();
+    _backgroundAnchor = DateTime.now();
     _goNext();
   }
 
   Future<void> _goNext() async {
-    await Future<void>.delayed(const Duration(milliseconds: 1700));
+    await Future<void>.delayed(const Duration(seconds: 7));
     if (!mounted) {
       return;
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
+      PageRouteBuilder(
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (_, __, ___) => MasterLoginScreen(
+          backgroundAnchor: _backgroundAnchor,
+        ),
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 120,
-                  height: 120,
-                  child: Image.asset(
-                    AssetPaths.image('Uygulama_resmi.png'),
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Local Password Manager',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+      body: BorealisAnimatedBackground(
+        anchorTime: _backgroundAnchor,
       ),
     );
   }
