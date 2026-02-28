@@ -365,37 +365,90 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     final widgets = <Widget>[];
 
     for (final category in orderedCategories) {
+      final entriesList = grouped[category]!;
+      
       widgets.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(
-            category,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
-
-      for (final entry in grouped[category]!) {
-        widgets.add(
-          ListTile(
-            title: Text(entry.title),
-            subtitle: Text('${entry.username} • ******'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(2),
+              border: Border.all(
+                color: Colors.white,
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility),
-                  onPressed: () => _showRealPassword(entry),
+                // Kategori Başlığı
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Text(
+                    category,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _goToEditForm(entry),
+                // Liste çizgisini ayıran ince çizgi (Düşündüğünüz tasarımdaki üst ayrım için)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Container(
+                    height: 1,
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                // İçerikteki şifre kutuları ve kartları
+                ...entriesList.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(2), // Dik köşelere daha yakın
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        title: Text(
+                          entry.title,
+                          style: const TextStyle(color: Colors.white, fontSize: 15),
+                        ),
+                        subtitle: Text(
+                          '${entry.username} • ******',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.visibility, color: Colors.white),
+                              onPressed: () => _showRealPassword(entry),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.white),
+                              onPressed: () => _goToEditForm(entry),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
               ],
             ),
           ),
-        );
-      }
+        ),
+      );
     }
 
     return widgets;
@@ -451,5 +504,6 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 }
+
 
 
