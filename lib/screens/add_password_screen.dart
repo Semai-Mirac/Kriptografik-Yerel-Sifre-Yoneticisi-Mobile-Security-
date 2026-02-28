@@ -82,93 +82,151 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
     Navigator.of(context).pop(entry);
   }
 
+  // Ortak şeffaf ve köşesi yuvarlak InputDecoration oluşturucu
+  InputDecoration _buildGlassInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.05), // Içi hafif transparan cama benzesin
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: Colors.white.withValues(alpha: 0.2), // Saydam beyaz çizgi
+          width: 1.0,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: Color(0xFF4FE3C1), // Temanın ana rengi focus olunca yanar
+          width: 1.5,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: Colors.redAccent.withValues(alpha: 0.5),
+          width: 1.0,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Kaydı Düzenle' : 'Şifre Ekle')),
+      appBar: AppBar(
+        title: Text(_isEdit ? 'Kaydı Düzenle' : 'Şifre Ekle'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: EdgeSwipeBack(
-        child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                items: _categories
-                    .map(
-                      (category) => DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(category),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    dropdownColor: const Color(0xFF0A1424), // Açılan kutunun rengi karanlık neon
+                    value: _selectedCategory,
+                    items: _categories
+                        .map(
+                          (category) => DropdownMenuItem<String>(
+                            value: category,
+                            child: Text(category, style: const TextStyle(color: Colors.white)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                    }
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                    },
+                    decoration: _buildGlassInputDecoration('Kategori'),
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _titleController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration('Başlık'),
+                    validator: (value) => (value == null || value.trim().isEmpty)
+                        ? 'Başlık zorunlu'
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _usernameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration('Kullanıcı adı veya E-posta'),
+                    validator: (value) => (value == null || value.trim().isEmpty)
+                        ? 'Kullanıcı adı zorunlu'
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _passwordController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration(_isEdit ? 'Yeni Şifre (boşsa değişmez)' : 'Şifre'),
+                    obscureText: true,
+                    validator: (value) {
+                      if (_isEdit) {
+                        return null;
+                      }
+                      return (value == null || value.isEmpty) ? 'Şifre zorunlu' : null;
+                    },
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4FE3C1).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFF4FE3C1).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _selectedCategory = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Kategori',
-                  border: OutlineInputBorder(),
-                ),
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: const Color(0xFF4FE3C1),
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        onPressed: _save,
+                        child: Text(
+                          _isEdit ? 'Güncelle' : 'Kaydet',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Başlık',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Başlık zorunlu'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Kullanıcı adı',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Kullanıcı adı zorunlu'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: _isEdit
-                      ? 'Yeni Şifre (boşsa değişmez)'
-                      : 'Şifre',
-                  border: const OutlineInputBorder(),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (_isEdit) {
-                    return null;
-                  }
-                  return (value == null || value.isEmpty) ? 'Şifre zorunlu' : null;
-                },
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _save,
-                  child: Text(_isEdit ? 'Güncelle' : 'Kaydet'),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
 }
+
 
