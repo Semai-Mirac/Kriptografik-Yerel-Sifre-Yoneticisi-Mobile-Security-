@@ -3,10 +3,11 @@
 import '../helpers/backup_helper.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/security_helper.dart';
+import '../localization/app_localizations.dart';
 import '../models/password_entry.dart';
+import '../widgets/edge_swipe_back.dart';
 import 'add_password_screen.dart';
 import 'master_login_screen.dart';
-import '../widgets/edge_swipe_back.dart';
 
 class PasswordListScreen extends StatefulWidget {
   const PasswordListScreen({super.key, required this.masterPassword});
@@ -19,10 +20,10 @@ class PasswordListScreen extends StatefulWidget {
 
 class _PasswordListScreenState extends State<PasswordListScreen> {
   static const List<String> _categoryOrder = [
-    'Sosyal Medya',
-    'İş',
-    'Kişisel',
-    'Diğer',
+    'social',
+    'work',
+    'personal',
+    'other',
   ];
 
   final List<PasswordEntry> _entries = [];
@@ -33,6 +34,42 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   void initState() {
     super.initState();
     _loadEntries();
+  }
+
+  String _normalizeCategoryKey(String category) {
+    final value = category.trim().toLowerCase();
+    switch (value) {
+      case 'social':
+      case 'sosyal medya':
+        return 'social';
+      case 'work':
+      case 'iş':
+      case 'is':
+        return 'work';
+      case 'personal':
+      case 'kişisel':
+      case 'kisisel':
+        return 'personal';
+      case 'other':
+      case 'diğer':
+      case 'diger':
+        return 'other';
+      default:
+        return 'other';
+    }
+  }
+
+  String _categoryLabel(String key, AppLocalizations loc) {
+    switch (key) {
+      case 'social':
+        return loc.t('categorySocial');
+      case 'work':
+        return loc.t('categoryWork');
+      case 'personal':
+        return loc.t('categoryPersonal');
+      default:
+        return loc.t('categoryOther');
+    }
   }
 
   Future<void> _loadEntries() async {
@@ -51,6 +88,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   }
 
   Future<void> _deleteEntry(PasswordEntry entry) async {
+    final loc = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,14 +97,17 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-            SizedBox(width: 10),
-            Text('Silmeyi Onayla', style: TextStyle(color: Colors.white)),
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 10),
+            Text(loc.t('confirmDeleteTitle'), style: const TextStyle(color: Colors.white)),
           ],
         ),
-        content: Text('"${entry.title}" kaydını tamamen silmek istediğinize emin misiniz?', style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+        content: Text(
+          '"${entry.title}" ${loc.t('confirmDeleteBody')}',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+        ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.only(bottom: 16, top: 0, left: 16, right: 16),
         actions: [
@@ -76,26 +117,26 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.08), 
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Vazgeç'),
+                  child: Text(loc.t('cancel')),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.redAccent.withValues(alpha: 0.8), 
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Sil'),
+                  child: Text(loc.t('delete')),
                 ),
               ),
             ],
@@ -106,15 +147,17 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 
     if (confirm == true && entry.id != null) {
       await DatabaseHelper.instance.deleteEntry(entry.id!);
-      _loadEntries(); // Listeyi yenile
+      _loadEntries();
     }
   }
 
   void _logout() {
+    final loc = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0A1424), // borealisSurface color
+        backgroundColor: const Color(0xFF0A1424),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -122,21 +165,21 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
             width: 1,
           ),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.info_outline, color: Color(0xFF4FE3C1)), // borealisPrimary color
-            SizedBox(width: 10),
+            const Icon(Icons.info_outline, color: Color(0xFF4FE3C1)),
+            const SizedBox(width: 10),
             Text(
-              'Çıkış Yapılıyor',
-              style: TextStyle(color: Colors.white),
+              loc.t('logoutTitle'),
+              style: const TextStyle(color: Colors.white),
             ),
           ],
         ),
         content: Text(
-          'Çıkış yapmak üzeresiniz, emin misiniz?',
+          loc.t('logoutBody'),
           style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
         ),
-        actionsAlignment: MainAxisAlignment.center, // Butonları ortaya hizala
+        actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.only(bottom: 16, top: 0, left: 16, right: 16),
         actions: [
           Row(
@@ -163,8 +206,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: () => Navigator.of(context).pop(), // Uyarıyı kapatır (Vazgeç)
-                    child: const Text('Vazgeçtim'),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(loc.t('cancelExit')),
                   ),
                 ),
               ),
@@ -191,14 +234,13 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Uyarıyı kapat
-                      // Giriş ekranına yönlendir ve geçmişi temizle
+                      Navigator.of(context).pop();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
                         (_) => false,
                       );
                     },
-                    child: const Text('Devam Et'),
+                    child: Text(loc.t('continueAction')),
                   ),
                 ),
               ),
@@ -214,6 +256,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       return;
     }
 
+    final loc = AppLocalizations.of(context);
+
     setState(() {
       _isBackingUp = true;
     });
@@ -228,7 +272,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Yedek Google Drive hesabına yüklendi.')),
+        SnackBar(content: Text(loc.t('backupSuccess'))),
       );
     } catch (error) {
       if (!mounted) {
@@ -248,7 +292,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Yedekleme başarısız: $error',
+                  '${loc.t('backupFailedPrefix')}: $error',
                   style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
                 ),
               ),
@@ -295,6 +339,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   }
 
   void _showRealPassword(PasswordEntry entry) {
+    final loc = AppLocalizations.of(context);
+
     try {
       final realPassword = SecurityHelper.decryptData(
         entry.encryptedPassword,
@@ -304,7 +350,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF0A1424), // borealisSurface color
+          backgroundColor: const Color(0xFF0A1424),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
@@ -327,18 +373,21 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Kategori: ${entry.category}',
+                '${loc.t('category')}: ${_categoryLabel(_normalizeCategoryKey(entry.category), loc)}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(height: 8),
               Text(
-                'Kullanıcı adı: ${entry.username}',
+                '${loc.t('username')}: ${entry.username}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
               ),
               const SizedBox(height: 8),
               Text(
-                'Gerçek şifre: $realPassword',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
+                '${loc.t('realPassword')}: $realPassword',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -370,7 +419,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Kapat'),
+                      child: Text(loc.t('close')),
                     ),
                   ),
                 ),
@@ -390,14 +439,14 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(color: Colors.red.withValues(alpha: 0.6), width: 1),
           ),
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
-              SizedBox(width: 10),
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Data could not be decrypted with this master password.',
-                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+                  loc.t('decryptFailed'),
+                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -408,9 +457,12 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   }
 
   List<Widget> _buildSectionedList() {
+    final loc = AppLocalizations.of(context);
+
     final grouped = <String, List<PasswordEntry>>{};
     for (final entry in _entries) {
-      grouped.putIfAbsent(entry.category, () => []).add(entry);
+      final categoryKey = _normalizeCategoryKey(entry.category);
+      grouped.putIfAbsent(categoryKey, () => []).add(entry);
     }
 
     final unknownCategories = grouped.keys
@@ -426,7 +478,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 
     for (final category in orderedCategories) {
       final entriesList = grouped[category]!;
-      
+
       widgets.add(
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -448,7 +500,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Text(
-                    category,
+                    _categoryLabel(category, loc),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -511,16 +563,19 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                               children: [
                                 Expanded(
                                   child: SizedBox(
-                                    height: 40, // Yüksekliği sabitliyoruz
+                                    height: 40,
                                     child: OutlinedButton.icon(
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.redAccent,
                                         side: BorderSide(color: const Color(0xFF4FE3C1).withValues(alpha: 0.15), width: 1.5),
-                                        padding: EdgeInsets.zero, // Padding karışıklığını önle
+                                        padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
                                       icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                                      label: const Text('Sil', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                      label: Text(
+                                        loc.t('delete'),
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
                                       onPressed: () => _deleteEntry(entry),
                                     ),
                                   ),
@@ -528,7 +583,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: SizedBox(
-                                    height: 40, // Yüksekliği sabitliyoruz
+                                    height: 40,
                                     child: Container(
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF4FE3C1).withValues(alpha: 0.15),
@@ -539,11 +594,14 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                                           backgroundColor: Colors.transparent,
                                           foregroundColor: const Color(0xFF4FE3C1),
                                           elevation: 0,
-                                          padding: EdgeInsets.zero, // Padding karışıklığını önle
+                                          padding: EdgeInsets.zero,
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                         ),
                                         icon: const Icon(Icons.edit_rounded, size: 16),
-                                        label: const Text('Güncelle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                        label: Text(
+                                          loc.t('update'),
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                        ),
                                         onPressed: () => _goToEditForm(entry),
                                       ),
                                     ),
@@ -570,6 +628,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -585,7 +645,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               SliverPadding(
                 padding: const EdgeInsets.all(12),
                 sliver: SliverAppBar(
-                  title: const Text('Şifreler'),
+                  title: Text(loc.t('passwords')),
                   floating: true,
                   snap: true,
                   backgroundColor: const Color(0xFF0A1424),
@@ -602,12 +662,12 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.cloud_upload),
-                      tooltip: 'Google Drive yedekle',
+                      tooltip: loc.t('backupToDrive'),
                     ),
                     IconButton(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout),
-                      tooltip: 'Çıkış Yap',
+                      tooltip: loc.t('logout'),
                     ),
                   ],
                 ),
@@ -620,7 +680,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _entries.isEmpty
-                      ? const Center(child: Text('Henüz kayıt yok.'))
+                      ? Center(child: Text(loc.t('noRecordsYet')))
                       : ListView(
                           padding: const EdgeInsets.only(top: 0),
                           children: _buildSectionedList(),
@@ -641,15 +701,3 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

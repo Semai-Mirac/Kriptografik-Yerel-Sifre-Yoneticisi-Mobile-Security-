@@ -1,7 +1,12 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:local_auth/local_auth.dart';
+import '../app.dart';
+import '../localization/app_localizations.dart';
 import '../constants/storage_keys.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/security_helper.dart';
@@ -28,7 +33,12 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
   final LocalAuthentication _localAuth = LocalAuthentication();
   final TextEditingController _masterPasswordController = TextEditingController();
   bool _isChecking = false;
+  bool _isLanguagePanelOpen = false;
+  int _selectedLanguageIndex = 0;
+  String _selectedLanguageCode = 'tr';
   late final AnimationController _contentController;
+  OverlayEntry? _topMessageEntry;
+  Timer? _topMessageTimer;
 
   @override
   void initState() {
@@ -42,6 +52,8 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
 
   @override
   void dispose() {
+    _topMessageTimer?.cancel();
+    _topMessageEntry?.remove();
     _masterPasswordController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -50,43 +62,127 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
   void _showStyledSnackBar({
     required IconData icon,
     required String message,
+    bool showAtTop = false,
   }) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        elevation: 0,
-        backgroundColor: Colors.red.withValues(alpha: 0.12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: Colors.red.withValues(alpha: 0.6),
-            width: 1,
+    if (!showAtTop) {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          elevation: 0,
+          backgroundColor: Colors.red.withValues(alpha: 0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: Colors.red.withValues(alpha: 0.6),
+              width: 1,
+            ),
+          ),
+          content: Row(
+            children: [
+              Icon(icon, color: Colors.redAccent, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        content: Row(
-          children: [
-            Icon(icon, color: Colors.redAccent, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+      );
+      return;
+    }
+
+    _topMessageTimer?.cancel();
+    _topMessageEntry?.remove();
+
+    final overlay = Overlay.of(context);
+    final topInset = MediaQuery.of(context).padding.top + 12;
+
+    final entry = OverlayEntry(
+      builder: (_) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                _topMessageTimer?.cancel();
+                _topMessageEntry?.remove();
+                _topMessageEntry = null;
+              },
+              child: const SizedBox.expand(),
+            ),
+          ),
+          Positioned(
+            top: topInset,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: GestureDetector(
+                onTap: () {
+                  _topMessageTimer?.cancel();
+                  _topMessageEntry?.remove();
+                  _topMessageEntry = null;
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.6),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: Colors.redAccent, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+
+    overlay.insert(entry);
+    _topMessageEntry = entry;
+
+    _topMessageTimer = Timer(const Duration(seconds: 3), () {
+      _topMessageEntry?.remove();
+      _topMessageEntry = null;
+    });
   }
 
   Future<void> _login() async {
     final masterPassword = _masterPasswordController.text.trim();
+    final loc = AppLocalizations.of(context);
+
     if (masterPassword.isEmpty) {
       _showStyledSnackBar(
         icon: Icons.warning_amber_rounded,
-        message: 'Password cannot be empty.',
+        message: loc.t('passwordEmpty'),
+        showAtTop: true,
       );
       return;
     }
@@ -116,7 +212,8 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
           });
           _showStyledSnackBar(
             icon: Icons.error_outline_rounded,
-            message: 'Incorrect master password.',
+            message: loc.t('incorrectMasterPassword'),
+            showAtTop: true,
           );
           return;
         }
@@ -145,7 +242,8 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
         });
         _showStyledSnackBar(
           icon: Icons.error_outline_rounded,
-          message: 'Incorrect master password.',
+          message: loc.t('incorrectMasterPassword'),
+          showAtTop: true,
         );
         return;
       }
@@ -163,7 +261,7 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
 
       if (canAuthenticate) {
         authenticated = await _localAuth.authenticate(
-          localizedReason: 'Lütfen uygulamaya girmek için parmak izinizi okutun',
+          localizedReason: loc.t('biometricPrompt'),
           biometricOnly: true,
           persistAcrossBackgrounding: true,
         );
@@ -184,7 +282,8 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
       });
       _showStyledSnackBar(
         icon: Icons.fingerprint_rounded,
-        message: 'Parmak izi / Biyometrik doğrulama başarısız oldu.',
+        message: loc.t('biometricFailed'),
+        showAtTop: true,
       );
       return;
     }
@@ -231,8 +330,190 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     );
   }
 
+  Widget _buildLanguageSelector() {
+    const globeAccents = <Color>[
+      Color(0xFF4FE3C1),
+      Color(0xFF8B7CFF),
+      Color(0xFF63B4FF),
+      Color(0xFFFFA94F),
+    ];
+    final loc = AppLocalizations.of(context);
+
+    final languageOptions = <Map<String, String>>[
+      {
+        'code': 'tr',
+        'label': loc.t('langTurkish'),
+        'asset': 'assets/images/turk.png',
+      },
+      {
+        'code': 'en',
+        'label': loc.t('langEnglish'),
+        'asset': 'assets/images/ingiliz.png',
+      },
+      {
+        'code': 'it',
+        'label': loc.t('langItalian'),
+        'asset': 'assets/images/italyan.png',
+      },
+      {
+        'code': 'ko',
+        'label': loc.t('langKorean'),
+        'asset': 'assets/images/kore.png',
+      },
+    ];
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: SafeArea(
+        minimum: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutQuad,
+              switchOutCurve: Curves.easeInQuad,
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    axisAlignment: 0,
+                    sizeFactor: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: !_isLanguagePanelOpen
+                  ? const SizedBox.shrink()
+                  : Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                      key: const ValueKey('language-panel'),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(languageOptions.length, (index) {
+                              final selected = _selectedLanguageIndex == index;
+                              final imagePadding = (index == 1 || index == 2) ? 1.4 : 2.0;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: Tooltip(
+                                  message: languageOptions[index]['label']!,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedLanguageIndex = index;
+                                        _selectedLanguageCode = languageOptions[index]['code']!;
+                                        _isLanguagePanelOpen = false;
+                                      });
+                                      MyApp.setLocale(context, _selectedLanguageCode);
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: globeAccents[index].withValues(
+                                          alpha: selected ? 0.34 : 0.20,
+                                        ),
+                                        border: Border.all(
+                                          color: selected
+                                              ? globeAccents[index].withValues(alpha: 0.95)
+                                              : Colors.white.withValues(alpha: 0.45),
+                                          width: selected ? 1.6 : 1,
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(imagePadding),
+                                        child: ClipOval(
+                                          child: Image.asset(
+                                            languageOptions[index]['asset']!,
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                    ),
+                    ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.42),
+                  width: 1,
+                ),
+              ),
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  side: BorderSide.none,
+                  minimumSize: const Size(56, 56),
+                  shape: const CircleBorder(),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isLanguagePanelOpen = !_isLanguagePanelOpen;
+                  });
+                },
+                child: Icon(
+                  Icons.public_rounded,
+                  size: 24,
+                  semanticLabel: '${loc.t('selectedLanguage')}: $_selectedLanguageCode',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return Scaffold(
       body: EdgeSwipeBack(
         onSwipeBack: () async {
@@ -240,82 +521,88 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
         },
         child: BorealisAnimatedBackground(
           initialProgress: widget.initialBackgroundProgress,
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildStaggeredItem(
-                      order: 0,
-                      child: TextField(
-                        controller: _masterPasswordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock_outline_rounded),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(14)),
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildStaggeredItem(
+                          order: 0,
+                          child: TextField(
+                            controller: _masterPasswordController,
+                            decoration: InputDecoration(
+                              labelText: loc.t('password'),
+                              prefixIcon: Icon(Icons.lock_outline_rounded),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(14)),
+                              ),
+                            ),
+                            obscureText: true,
                           ),
                         ),
-                        obscureText: true,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStaggeredItem(
-                      order: 1,
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.42),
-                              width: 1,
-                            ),
-                          ),
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shadowColor: Colors.transparent,
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
+                        const SizedBox(height: 16),
+                        _buildStaggeredItem(
+                          order: 1,
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.42),
+                                  width: 1,
+                                ),
                               ),
-                            ),
-                            onPressed: _isChecking ? null : _login,
-                            icon: Icon(
-                              _isChecking
-                                  ? Icons.hourglass_top_rounded
-                                  : Icons.login_rounded,
-                              size: 18,
-                            ),
-                            label: Text(
-                              _isChecking ? 'Checking...' : 'Sign In',
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shadowColor: Colors.transparent,
+                                  side: BorderSide.none,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: _isChecking ? null : _login,
+                                icon: Icon(
+                                  _isChecking
+                                      ? Icons.hourglass_top_rounded
+                                      : Icons.login_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  _isChecking ? loc.t('checking') : loc.t('signIn'),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              _buildStaggeredItem(
+                order: 1,
+                child: _buildLanguageSelector(),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-
 
