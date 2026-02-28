@@ -54,29 +54,95 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0A1424), // borealisSurface color
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.blueAccent),
+            Icon(Icons.info_outline, color: Color(0xFF4FE3C1)), // borealisPrimary color
             SizedBox(width: 10),
-            Text('Çıkış Yapılıyor'),
+            Text(
+              'Çıkış Yapılıyor',
+              style: TextStyle(color: Colors.white),
+            ),
           ],
         ),
-        content: const Text('Çıkış yapmak üzeresiniz, emin misiniz?'),
+        content: Text(
+          'Çıkış yapmak üzeresiniz, emin misiniz?',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+        ),
+        actionsAlignment: MainAxisAlignment.center, // Butonları ortaya hizala
+        actionsPadding: const EdgeInsets.only(bottom: 16, top: 0, left: 16, right: 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Uyarıyı kapatır (Vazgeç)
-            child: const Text('Vazgeçtim'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Uyarıyı kapat
-              // Giriş ekranına yönlendir ve geçmişi temizle
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
-                (_) => false,
-              );
-            },
-            child: const Text('Devam Et'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.42),
+                      width: 1,
+                    ),
+                  ),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(), // Uyarıyı kapatır (Vazgeç)
+                    child: const Text('Vazgeçtim'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.42),
+                      width: 1,
+                    ),
+                  ),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Uyarıyı kapat
+                      // Giriş ekranına yönlendir ve geçmişi temizle
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
+                        (_) => false,
+                      );
+                    },
+                    child: const Text('Devam Et'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -283,6 +349,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 }
+
 
 
 
