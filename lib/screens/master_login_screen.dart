@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:local_auth/local_auth.dart';
 import '../constants/storage_keys.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/security_helper.dart';
@@ -24,6 +25,7 @@ class MasterLoginScreen extends StatefulWidget {
 
 class _MasterLoginScreenState extends State<MasterLoginScreen>
     with SingleTickerProviderStateMixin {
+  final LocalAuthentication _localAuth = LocalAuthentication();
   final TextEditingController _masterPasswordController = TextEditingController();
   bool _isChecking = false;
   late final AnimationController _contentController;
@@ -150,6 +152,40 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     }
 
     if (!mounted) {
+      return;
+    }
+
+    // --- Biyometrik Doğrulama ---
+    bool authenticated = false;
+    try {
+      final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+
+      if (canAuthenticate) {
+        authenticated = await _localAuth.authenticate(
+          localizedReason: 'Lütfen uygulamaya girmek için parmak izinizi okutun',
+          biometricOnly: true,
+          persistAcrossBackgrounding: true,
+        );
+      } else {
+        // Cihaz biyometriği desteklemiyorsa şifre doğru olduğu için devam et
+        authenticated = true;
+      }
+    } catch (e) {
+      debugPrint('Biyometrik doğrulama hatası: $e');
+      authenticated = false;
+    }
+
+    if (!mounted) return;
+
+    if (!authenticated) {
+      setState(() {
+        _isChecking = false;
+      });
+      _showStyledSnackBar(
+        icon: Icons.fingerprint_rounded,
+        message: 'Parmak izi / Biyometrik doğrulama başarısız oldu.',
+      );
       return;
     }
 
@@ -280,4 +316,6 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     );
   }
 }
+
+
 
