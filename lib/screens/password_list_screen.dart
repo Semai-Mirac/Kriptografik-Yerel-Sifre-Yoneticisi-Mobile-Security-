@@ -50,6 +50,66 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     });
   }
 
+  Future<void> _deleteEntry(PasswordEntry entry) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0A1424),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            SizedBox(width: 10),
+            Text('Silmeyi Onayla', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Text('"${entry.title}" kaydını tamamen silmek istediğinize emin misiniz?', style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.only(bottom: 16, top: 0, left: 16, right: 16),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.08), 
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Vazgeç'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.8), 
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Sil'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && entry.id != null) {
+      await DatabaseHelper.instance.deleteEntry(entry.id!);
+      _loadEntries(); // Listeyi yenile
+    }
+  }
+
   void _logout() {
     showDialog(
       context: context,
@@ -372,17 +432,19 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(2),
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, spreadRadius: 1),
+              ],
               border: Border.all(
-                color: Colors.white,
-                width: 1.5,
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1.0,
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kategori Başlığı
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Text(
@@ -394,48 +456,100 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                     ),
                   ),
                 ),
-                // Liste çizgisini ayıran ince çizgi (Düşündüğünüz tasarımdaki üst ayrım için)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Container(
                     height: 1,
-                    color: Colors.white,
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
                 const SizedBox(height: 8),
-                // İçerikteki şifre kutuları ve kartları
                 ...entriesList.map((entry) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(2), // Dik köşelere daha yakın
+                        color: Colors.black.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white,
-                          width: 1.5,
+                          color: Colors.white.withValues(alpha: 0.08),
+                          width: 1.0,
                         ),
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        title: Text(
-                          entry.title,
-                          style: const TextStyle(color: Colors.white, fontSize: 15),
-                        ),
-                        subtitle: Text(
-                          '${entry.username} • ******',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.white),
-                              onPressed: () => _showRealPassword(entry),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.title,
+                                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${entry.username} • ******',
+                                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.visibility_outlined, color: Colors.white),
+                                  onPressed: () => _showRealPassword(entry),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.white),
-                              onPressed: () => _goToEditForm(entry),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 40, // Yüksekliği sabitliyoruz
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.redAccent,
+                                        side: BorderSide(color: const Color(0xFF4FE3C1).withValues(alpha: 0.15), width: 1.5),
+                                        padding: EdgeInsets.zero, // Padding karışıklığını önle
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                      icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                                      label: const Text('Sil', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                      onPressed: () => _deleteEntry(entry),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 40, // Yüksekliği sabitliyoruz
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF4FE3C1).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          foregroundColor: const Color(0xFF4FE3C1),
+                                          elevation: 0,
+                                          padding: EdgeInsets.zero, // Padding karışıklığını önle
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        icon: const Icon(Icons.edit_rounded, size: 16),
+                                        label: const Text('Güncelle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                        onPressed: () => _goToEditForm(entry),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -465,45 +579,77 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         _logout();
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Şifreler'),
-        actions: [
-          IconButton(
-            onPressed: _isBackingUp ? null : _backupToCloud,
-            icon: _isBackingUp
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.cloud_upload),
-            tooltip: 'Google Drive yedekle',
+        body: SafeArea(
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+              SliverPadding(
+                padding: const EdgeInsets.all(12),
+                sliver: SliverAppBar(
+                  title: const Text('Şifreler'),
+                  floating: true,
+                  snap: true,
+                  backgroundColor: const Color(0xFF0A1424),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  actions: [
+                    IconButton(
+                      onPressed: _isBackingUp ? null : _backupToCloud,
+                      icon: _isBackingUp
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.cloud_upload),
+                      tooltip: 'Google Drive yedekle',
+                    ),
+                    IconButton(
+                      onPressed: _logout,
+                      icon: const Icon(Icons.logout),
+                      tooltip: 'Çıkış Yap',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            body: EdgeSwipeBack(
+              onSwipeBack: () async {
+                _logout();
+              },
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _entries.isEmpty
+                      ? const Center(child: Text('Henüz kayıt yok.'))
+                      : ListView(
+                          padding: const EdgeInsets.only(top: 0),
+                          children: _buildSectionedList(),
+                        ),
+            ),
           ),
-          IconButton(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Çıkış Yap',
+        ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 24.0),
+          child: FloatingActionButton(
+            backgroundColor: const Color(0xFF4FE3C1).withValues(alpha: 0.6),
+            elevation: 0,
+            onPressed: _goToAddForm,
+            child: const Icon(Icons.add, color: Colors.white),
           ),
-        ],
-      ),
-      body: EdgeSwipeBack(
-        onSwipeBack: () async {
-          _logout();
-        },
-        child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _entries.isEmpty
-              ? const Center(child: Text('Henüz kayıt yok.'))
-              : ListView(children: _buildSectionedList()),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _goToAddForm,
-        child: const Icon(Icons.add),
-      ),
+        ),
       ),
     );
   }
 }
+
+
+
+
+
+
+
+
+
 
 
 

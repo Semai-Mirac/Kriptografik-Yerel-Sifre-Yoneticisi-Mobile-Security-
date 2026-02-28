@@ -96,6 +96,15 @@ class DatabaseHelper {
     return rows.first['value'] as String;
   }
 
+  Future<void> deleteEntry(int id) async {
+    final db = await database;
+    await db.delete(
+      _entriesTable,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> setSetting(String key, String value) async {
     final db = await database;
     await db.insert(
@@ -105,3 +114,6 @@ class DatabaseHelper {
     );
   }
 }
+
+
+
