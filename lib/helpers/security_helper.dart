@@ -54,7 +54,8 @@ class SecurityHelper {
         iv: iv,
       );
     } catch (_) {
-      throw const FormatException('Geçersiz master şifre veya bozuk veri.');
+      throw const FormatException('Invalid master password or corrupted data.');
     }
   }
 }
+

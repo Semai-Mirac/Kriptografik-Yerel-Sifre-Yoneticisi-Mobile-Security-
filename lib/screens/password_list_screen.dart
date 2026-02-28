@@ -5,6 +5,8 @@ import '../helpers/database_helper.dart';
 import '../helpers/security_helper.dart';
 import '../models/password_entry.dart';
 import 'add_password_screen.dart';
+import 'master_login_screen.dart';
+import '../widgets/edge_swipe_back.dart';
 
 class PasswordListScreen extends StatefulWidget {
   const PasswordListScreen({super.key, required this.masterPassword});
@@ -48,6 +50,13 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     });
   }
 
+  void _logout() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MasterLoginScreen()),
+      (_) => false,
+    );
+  }
+
   Future<void> _backupToCloud() async {
     if (_isBackingUp) {
       return;
@@ -64,7 +73,9 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
         const SnackBar(content: Text('Yedek Google Drive hesabına yüklendi.')),
       );
     } catch (error) {
@@ -143,8 +154,10 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         ),
       );
     } on FormatException {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bu master şifre ile veri çözülemedi.')),
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Data could not be decrypted with this master password.')),
       );
     }
   }
@@ -220,13 +233,23 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
                 : const Icon(Icons.cloud_upload),
             tooltip: 'Google Drive yedekle',
           ),
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Çıkış Yap',
+          ),
         ],
       ),
-      body: _isLoading
+      body: EdgeSwipeBack(
+        onSwipeBack: () async {
+          _logout();
+        },
+        child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _entries.isEmpty
               ? const Center(child: Text('Henüz kayıt yok.'))
               : ListView(children: _buildSectionedList()),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _goToAddForm,
         child: const Icon(Icons.add),
@@ -234,3 +257,10 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 }
+
+
+
+
+
+
+

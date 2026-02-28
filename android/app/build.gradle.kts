@@ -12,6 +12,31 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+fun readKeystoreProp(name: String): String? {
+    val direct = keystoreProperties.getProperty(name)?.trim()
+    if (!direct.isNullOrEmpty()) {
+        return direct
+    }
+
+    return keystoreProperties.entries
+        .firstOrNull { (it.key as? String)?.trim('\uFEFF', ' ', '\t', '\r', '\n') == name }
+        ?.value
+        ?.toString()
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+}
+
+val releaseStoreFilePath = readKeystoreProp("storeFile")
+val releaseStorePassword = readKeystoreProp("storePassword")
+val releaseKeyAlias = readKeystoreProp("keyAlias")
+val releaseKeyPassword = readKeystoreProp("keyPassword")
+
+val hasCompleteReleaseSigning =
+    !releaseStoreFilePath.isNullOrBlank() &&
+    !releaseStorePassword.isNullOrBlank() &&
+    !releaseKeyAlias.isNullOrBlank() &&
+    !releaseKeyPassword.isNullOrBlank()
+
 android {
     namespace = "com.semaimi.cipherguard"
     compileSdk = flutter.compileSdkVersion
@@ -36,19 +61,18 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFilePath = keystoreProperties["storeFile"] as String?
-            if (!storeFilePath.isNullOrBlank()) {
-                storeFile = file(storeFilePath)
-                storePassword = keystoreProperties["storePassword"] as String?
-                keyAlias = keystoreProperties["keyAlias"] as String?
-                keyPassword = keystoreProperties["keyPassword"] as String?
+            if (hasCompleteReleaseSigning) {
+                storeFile = file(releaseStoreFilePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            signingConfig = if (hasCompleteReleaseSigning) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
@@ -60,5 +84,3 @@ android {
 flutter {
     source = "../.."
 }
-
-

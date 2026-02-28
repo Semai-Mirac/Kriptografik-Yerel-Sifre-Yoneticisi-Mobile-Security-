@@ -2,6 +2,7 @@
 
 import '../helpers/security_helper.dart';
 import '../models/password_entry.dart';
+import '../widgets/edge_swipe_back.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   const AddPasswordScreen({
@@ -85,7 +86,8 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? 'Kaydı Düzenle' : 'Şifre Ekle')),
-      body: Padding(
+      body: EdgeSwipeBack(
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -164,7 +166,9 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
 }
+
