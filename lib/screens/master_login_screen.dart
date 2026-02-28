@@ -55,22 +55,22 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
       SnackBar(
         behavior: SnackBarBehavior.floating,
         elevation: 0,
-        backgroundColor: Colors.white.withValues(alpha: 0.08),
+        backgroundColor: Colors.red.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.42),
+            color: Colors.red.withValues(alpha: 0.6),
             width: 1,
           ),
         ),
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 18),
+            Icon(icon, color: Colors.redAccent, size: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -280,3 +280,4 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     );
   }
 }
+

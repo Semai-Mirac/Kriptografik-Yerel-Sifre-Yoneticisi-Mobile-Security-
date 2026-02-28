@@ -175,7 +175,26 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Yedekleme başarısız: $error')),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.withValues(alpha: 0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: Colors.red.withValues(alpha: 0.6), width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Yedekleme başarısız: $error',
+                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -225,22 +244,77 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text(entry.title),
+          backgroundColor: const Color(0xFF0A1424), // borealisSurface color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.key, color: Color(0xFF4FE3C1)),
+              const SizedBox(width: 10),
+              Text(
+                entry.title,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Kategori: ${entry.category}'),
+              Text(
+                'Kategori: ${entry.category}',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+              ),
               const SizedBox(height: 8),
-              Text('Kullanıcı adı: ${entry.username}'),
+              Text(
+                'Kullanıcı adı: ${entry.username}',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+              ),
               const SizedBox(height: 8),
-              Text('Gerçek şifre: $realPassword'),
+              Text(
+                'Gerçek şifre: $realPassword',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
+              ),
             ],
           ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.only(bottom: 16, top: 0, left: 16, right: 16),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Kapat'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.42),
+                        width: 1,
+                      ),
+                    ),
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Kapat'),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -249,7 +323,26 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Data could not be decrypted with this master password.')),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.withValues(alpha: 0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: Colors.red.withValues(alpha: 0.6), width: 1),
+          ),
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Data could not be decrypted with this master password.',
+                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
   }
@@ -310,7 +403,15 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        _logout();
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Şifreler'),
         actions: [
@@ -346,16 +447,9 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         onPressed: _goToAddForm,
         child: const Icon(Icons.add),
       ),
+      ),
     );
   }
 }
-
-
-
-
-
-
-
-
 
 
