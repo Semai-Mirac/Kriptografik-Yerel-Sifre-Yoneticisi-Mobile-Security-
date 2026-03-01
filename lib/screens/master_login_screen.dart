@@ -36,9 +36,11 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
   bool _isLanguagePanelOpen = false;
   int _selectedLanguageIndex = 0;
   String _selectedLanguageCode = 'tr';
+  bool _isFirstTimePasswordSetup = false;
   late final AnimationController _contentController;
   OverlayEntry? _topMessageEntry;
   Timer? _topMessageTimer;
+  static const Duration _topMessageDuration = Duration(seconds: 3);
 
   @override
   void initState() {
@@ -48,6 +50,23 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
       duration: const Duration(milliseconds: 2300),
     );
     _contentController.forward();
+    _loadFirstTimePasswordState();
+  }
+
+
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    const languageCodes = ['tr', 'en', 'it', 'ko'];
+    final currentCode = Localizations.localeOf(context).languageCode;
+    final index = languageCodes.indexOf(currentCode);
+
+    if (index >= 0) {
+      _selectedLanguageIndex = index;
+      _selectedLanguageCode = currentCode;
+    }
   }
 
   @override
@@ -57,6 +76,27 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     _masterPasswordController.dispose();
     _contentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadFirstTimePasswordState() async {
+    final verifierCipher = await DatabaseHelper.instance.getSetting(
+      kMasterVerifierKey,
+    );
+
+    bool isFirstTime = verifierCipher == null || verifierCipher.isEmpty;
+
+    if (isFirstTime) {
+      final entries = await DatabaseHelper.instance.getEntries();
+      isFirstTime = entries.isEmpty;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isFirstTimePasswordSetup = isFirstTime;
+    });
   }
 
   void _showStyledSnackBar({
@@ -168,10 +208,45 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
     overlay.insert(entry);
     _topMessageEntry = entry;
 
-    _topMessageTimer = Timer(const Duration(seconds: 3), () {
+    _topMessageTimer = Timer(_topMessageDuration, () {
       _topMessageEntry?.remove();
       _topMessageEntry = null;
     });
+  }
+
+  bool _isBiometricLockoutError(Object error) {
+    if (error is PlatformException) {
+      return error.code.toLowerCase().contains('lock');
+    }
+
+    return error.toString().toLowerCase().contains('lock');
+  }
+
+  Future<bool> _showBiometricRetryDialog() async {
+    final loc = AppLocalizations.of(context);
+
+    final shouldRetry = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(loc.t('biometricRetryTitle')),
+          content: Text(loc.t('biometricRetryBody')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(loc.t('cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(loc.t('retry')),
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldRetry ?? false;
   }
 
   Future<void> _login() async {
@@ -224,6 +299,11 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
         masterPassword,
       );
       await DatabaseHelper.instance.setSetting(kMasterVerifierKey, newVerifier);
+      if (mounted) {
+        setState(() {
+          _isFirstTimePasswordSetup = false;
+        });
+      }
     } else {
       try {
         final verifierPlain = SecurityHelper.decryptData(
@@ -253,25 +333,71 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
       return;
     }
 
-    // --- Biyometrik Doğrulama ---
+    // --- Biyometrik Do?rulama ---
     bool authenticated = false;
-    try {
-      final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
 
-      if (canAuthenticate) {
-        authenticated = await _localAuth.authenticate(
-          localizedReason: loc.t('biometricPrompt'),
-          biometricOnly: true,
-          persistAcrossBackgrounding: true,
-        );
-      } else {
-        // Cihaz biyometriği desteklemiyorsa şifre doğru olduğu için devam et
-        authenticated = true;
+    final bool canAuthenticateWithBiometrics =
+        await _localAuth.canCheckBiometrics;
+    final bool canAuthenticate =
+        canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+
+    if (canAuthenticate) {
+      bool shouldRetry = true;
+
+      while (!authenticated && shouldRetry) {
+        bool isLockoutError = false;
+
+        try {
+          authenticated = await _localAuth.authenticate(
+            localizedReason: loc.t('biometricPrompt'),
+            biometricOnly: true,
+            persistAcrossBackgrounding: true,
+          );
+        } catch (e) {
+          debugPrint('Biyometrik do?rulama hatas?: $e');
+          authenticated = false;
+          isLockoutError = _isBiometricLockoutError(e);
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        if (!authenticated && isLockoutError) {
+          _showStyledSnackBar(
+            icon: Icons.timer_off_rounded,
+            message: loc.t('biometricTemporarilyLocked'),
+            showAtTop: true,
+          );
+
+          await Future.delayed(_topMessageDuration);
+          if (!mounted) {
+            return;
+          }
+
+          try {
+            authenticated = await _localAuth.authenticate(
+              localizedReason: loc.t('biometricPrompt'),
+              biometricOnly: false,
+              persistAcrossBackgrounding: true,
+            );
+          } catch (e) {
+            debugPrint('Cihaz kimlik do?rulama hatas?: $e');
+            authenticated = false;
+          }
+
+          if (!mounted) {
+            return;
+          }
+        }
+
+        if (!authenticated) {
+          shouldRetry = await _showBiometricRetryDialog();
+        }
       }
-    } catch (e) {
-      debugPrint('Biyometrik doğrulama hatası: $e');
-      authenticated = false;
+    } else {
+      // Cihaz biyometri?i desteklemiyorsa ?ifre do?ru oldu?u i?in devam et
+      authenticated = true;
     }
 
     if (!mounted) return;
@@ -329,6 +455,51 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
       ),
     );
   }
+
+  Widget _buildFirstTimeWarning() {
+    final loc = AppLocalizations.of(context);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Colors.red.withValues(alpha: 0.65),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.t('firstTimeWarningTitle'),
+                style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                loc.t('firstTimeWarningBody'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildLanguageSelector() {
     const globeAccents = <Color>[
@@ -532,8 +703,15 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (_isFirstTimePasswordSetup) ...[
+                          _buildStaggeredItem(
+                            order: 0,
+                            child: _buildFirstTimeWarning(),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         _buildStaggeredItem(
-                          order: 0,
+                          order: 1,
                           child: TextField(
                             controller: _masterPasswordController,
                             decoration: InputDecoration(
@@ -554,7 +732,7 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
                         ),
                         const SizedBox(height: 16),
                         _buildStaggeredItem(
-                          order: 1,
+                          order: 2,
                           child: Align(
                             alignment: Alignment.center,
                             child: Container(
@@ -601,7 +779,7 @@ class _MasterLoginScreenState extends State<MasterLoginScreen>
                 ),
               ),
               _buildStaggeredItem(
-                order: 1,
+                order: 2,
                 child: _buildLanguageSelector(),
               ),
             ],

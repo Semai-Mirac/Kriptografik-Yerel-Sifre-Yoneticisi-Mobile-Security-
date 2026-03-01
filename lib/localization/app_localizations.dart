@@ -9,13 +9,18 @@ class AppLocalizations {
       _AppLocalizationsDelegate();
 
   static AppLocalizations of(BuildContext context) {
-    final localizations =
-        Localizations.of<AppLocalizations>(context, AppLocalizations);
+    final localizations = Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    );
     return localizations ?? AppLocalizations(const Locale('tr'));
   }
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'tr': {
+      'firstTimeWarningTitle': 'D\u0130KKAT UYARI',
+      'firstTimeWarningBody':
+          'Burada belirleyip girece\u011Finiz \u015Fifre kal\u0131c\u0131 olacakt\u0131r ve de\u011Fi\u015Ftirilmeyecektir. \u015Eifrenizi unutmay\u0131n!',
       'password': 'Şifre',
       'signIn': 'Giriş Yap',
       'checking': 'Kontrol ediliyor...',
@@ -23,6 +28,11 @@ class AppLocalizations {
       'incorrectMasterPassword': 'Ana şifre hatalı.',
       'biometricPrompt': 'Lütfen uygulamaya girmek için parmak izinizi okutun',
       'biometricFailed': 'Parmak izi / biyometrik doğrulama başarısız oldu.',
+      'biometricRetryTitle': 'Biyometrik Do\u011Frulama',
+      'biometricRetryBody':
+          'Parmak izi do\u011Frulamas\u0131 ba\u015Far\u0131s\u0131z oldu. Tekrar denemek ister misiniz?',
+      'biometricTemporarilyLocked': '\u00C7ok fazla hatal\u0131 deneme nedeniyle biyometrik do\u011Frulama ge\u00E7ici olarak kilitlendi. L\u00FCtfen birka\u00E7 saniye bekleyip tekrar deneyin.',
+      'retry': 'Tekrar Dene',
       'langTurkish': 'Türkçe',
       'langEnglish': 'İngilizce',
       'langItalian': 'İtalyanca',
@@ -63,6 +73,9 @@ class AppLocalizations {
       'save': 'Kaydet',
     },
     'en': {
+      'firstTimeWarningTitle': 'IMPORTANT WARNING',
+      'firstTimeWarningBody':
+          'The password you set and enter here will be permanent and cannot be changed. Please do not forget your password!',
       'password': 'Password',
       'signIn': 'Sign In',
       'checking': 'Checking...',
@@ -70,6 +83,11 @@ class AppLocalizations {
       'incorrectMasterPassword': 'Incorrect master password.',
       'biometricPrompt': 'Please scan your fingerprint to enter the app',
       'biometricFailed': 'Fingerprint / biometric authentication failed.',
+      'biometricRetryTitle': 'Biometric Authentication',
+      'biometricRetryBody':
+          'Fingerprint authentication failed. Would you like to try again?',
+      'biometricTemporarilyLocked': 'Biometric authentication is temporarily locked due to too many failed attempts. Please wait a few seconds and try again.',
+      'retry': 'Retry',
       'langTurkish': 'Turkish',
       'langEnglish': 'English',
       'langItalian': 'Italian',
@@ -110,13 +128,22 @@ class AppLocalizations {
       'save': 'Save',
     },
     'it': {
+      'firstTimeWarningTitle': 'AVVISO IMPORTANTE',
+      'firstTimeWarningBody':
+          'La password che imposti e inserisci qui sar? permanente e non potr? essere modificata. Non dimenticare la tua password!',
       'password': 'Password',
       'signIn': 'Accedi',
       'checking': 'Controllo in corso...',
       'passwordEmpty': 'La password non può essere vuota.',
       'incorrectMasterPassword': 'Password principale non corretta.',
-      'biometricPrompt': 'Scansiona la tua impronta digitale per entrare nell\'app',
+      'biometricPrompt':
+          'Scansiona la tua impronta digitale per entrare nell\'app',
       'biometricFailed': 'Autenticazione con impronta / biometria non riuscita.',
+      'biometricRetryTitle': 'Autenticazione Biometrica',
+      'biometricRetryBody':
+          'L\'autenticazione con impronta non e riuscita. Vuoi riprovare?',
+      'biometricTemporarilyLocked': 'L\'autenticazione biometrica e temporaneamente bloccata a causa di troppi tentativi falliti. Attendi qualche secondo e riprova.',
+      'retry': 'Riprova',
       'langTurkish': 'Turco',
       'langEnglish': 'Inglese',
       'langItalian': 'Italiano',
@@ -140,7 +167,8 @@ class AppLocalizations {
       'username': 'Nome utente',
       'realPassword': 'Password reale',
       'close': 'Chiudi',
-      'decryptFailed': 'Impossibile decifrare i dati con questa password principale.',
+      'decryptFailed':
+          'Impossibile decifrare i dati con questa password principale.',
       'categorySocial': 'Social Media',
       'categoryWork': 'Lavoro',
       'categoryPersonal': 'Personale',
@@ -157,6 +185,9 @@ class AppLocalizations {
       'save': 'Salva',
     },
     'ko': {
+      'firstTimeWarningTitle': '\uC911\uC694 \uACBD\uACE0',
+      'firstTimeWarningBody':
+          '\uC5EC\uAE30\uC11C \uC124\uC815\uD558\uACE0 \uC785\uB825\uD558\uB294 \uBE44\uBC00\uBC88\uD638\uB294 \uC601\uAD6C\uC801\uC73C\uB85C \uACE0\uC815\uB418\uBA70 \uBCC0\uACBD\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBE44\uBC00\uBC88\uD638\uB97C \uC78A\uC9C0 \uB9C8\uC138\uC694!',
       'password': '비밀번호',
       'signIn': '로그인',
       'checking': '확인 중...',
@@ -164,6 +195,11 @@ class AppLocalizations {
       'incorrectMasterPassword': '마스터 비밀번호가 올바르지 않습니다.',
       'biometricPrompt': '앱에 들어가려면 지문을 스캔하세요',
       'biometricFailed': '지문 / 생체 인증에 실패했습니다.',
+      'biometricRetryTitle': '\uC0DD\uCCB4 \uC778\uC99D',
+      'biometricRetryBody':
+          '\uC9C0\uBB38 \uC778\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?',
+      'biometricTemporarilyLocked': '\uC2E4\uD328 \uC2DC\uB3C4\uAC00 \uB108\uBB34 \uB9CE\uC544 \uC0DD\uCCB4 \uC778\uC99D\uC774 \uC77C\uC2DC\uC801\uC73C\uB85C \uC7A0\uACBC\uC2B5\uB2C8\uB2E4. \uBA87 \uCD08 \uD6C4\uC5D0 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.',
+      'retry': '\uB2E4\uC2DC \uC2DC\uB3C4',
       'langTurkish': '터키어',
       'langEnglish': '영어',
       'langItalian': '이탈리아어',
@@ -215,7 +251,8 @@ class AppLocalizations {
   }
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override

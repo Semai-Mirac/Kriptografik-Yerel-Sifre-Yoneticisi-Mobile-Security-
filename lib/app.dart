@@ -2,6 +2,8 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'localization/app_localizations.dart';
+import 'helpers/database_helper.dart';
+import 'constants/storage_keys.dart';
 import 'screens/splash_screen.dart';
 
 class MyApp extends StatefulWidget {
@@ -19,10 +21,39 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Locale _locale = const Locale('tr');
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLocale();
+  }
+
+  Future<void> _loadSavedLocale() async {
+    final languageCode = await DatabaseHelper.instance.getSetting(
+      kLanguageCodeSettingKey,
+    );
+
+    if (!mounted || languageCode == null) {
+      return;
+    }
+
+    const supported = {'tr', 'en', 'it', 'ko'};
+    if (!supported.contains(languageCode)) {
+      return;
+    }
+
+    setState(() {
+      _locale = Locale(languageCode);
+    });
+  }
+
   void setLocale(Locale locale) {
     setState(() {
       _locale = locale;
     });
+    DatabaseHelper.instance.setSetting(
+      kLanguageCodeSettingKey,
+      locale.languageCode,
+    );
   }
 
   @override
