@@ -290,7 +290,26 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
-        SnackBar(content: Text(loc.t('restoreSuccess') ?? 'Yedek başarıyla geri yüklendi.')),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF4FE3C1).withValues(alpha: 0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: const Color(0xFF4FE3C1).withValues(alpha: 0.6), width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF4FE3C1), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  loc.t('restoreSuccess') ?? 'Yedek başarıyla geri yüklendi.',
+                  style: const TextStyle(color: Color(0xFF4FE3C1), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
@@ -298,9 +317,21 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.red.withValues(alpha: 0.12),
-          content: Text(
-            "${loc.t('restoreFailedPrefix') ?? 'Geri yükleme başarısız'}: $error",
-            style: const TextStyle(color: Colors.red),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: Colors.red.withValues(alpha: 0.6), width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "${loc.t('restoreFailedPrefix') ?? 'Geri yükleme başarısız'}: $error",
+                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -334,7 +365,26 @@ Future<void> _backupToCloud() async {
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
-        SnackBar(content: Text(loc.t('backupSuccess'))),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF4FE3C1).withValues(alpha: 0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(color: const Color(0xFF4FE3C1).withValues(alpha: 0.6), width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF4FE3C1), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  loc.t('backupSuccess'),
+                  style: const TextStyle(color: Color(0xFF4FE3C1), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) {
@@ -715,6 +765,17 @@ Future<void> _backupToCloud() async {
                     borderRadius: BorderRadius.circular(24),
                   ),
                   actions: [
+                    IconButton(
+                      onPressed: _isRestoring ? null : _restoreFromCloud,
+                      icon: _isRestoring
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.cloud_download),
+                      tooltip: loc.t('restoreFromDrive') ?? 'Geri Yükle',
+                    ),
                     IconButton(
                       onPressed: _isBackingUp ? null : _backupToCloud,
                       icon: _isBackingUp
