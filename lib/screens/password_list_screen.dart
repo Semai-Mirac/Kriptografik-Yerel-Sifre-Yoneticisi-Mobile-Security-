@@ -29,6 +29,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   final List<PasswordEntry> _entries = [];
   bool _isLoading = true;
   bool _isBackingUp = false;
+  bool _isRestoring = false;
 
   @override
   void initState() {
@@ -251,7 +252,68 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
     );
   }
 
-  Future<void> _backupToCloud() async {
+    Future<void> _restoreFromCloud() async {
+    if (_isRestoring) return;
+
+    final loc = AppLocalizations.of(context);
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0A1424),
+        title: Text(loc.t('confirmRestoreTitle') ?? 'Geri Yüklemeyi Onayla'),
+        content: Text(loc.t('confirmRestoreBody') ?? 'Varolan tüm şifreleriniz silinecek ve yedekteki şifreleriniz yüklenecek. Emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(loc.t('cancel') ?? 'Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(loc.t('continueAction') ?? 'Devam Et'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isRestoring = true;
+    });
+
+    try {
+      await BackupHelper.downloadEncryptedBackup(masterPassword: widget.masterPassword);
+      await _loadEntries();
+      
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(content: Text(loc.t('restoreSuccess') ?? 'Yedek başarıyla geri yüklendi.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.withValues(alpha: 0.12),
+          content: Text(
+            "${loc.t('restoreFailedPrefix') ?? 'Geri yükleme başarısız'}: $error",
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRestoring = false;
+        });
+      }
+    }
+  }
+
+Future<void> _backupToCloud() async {
     if (_isBackingUp) {
       return;
     }

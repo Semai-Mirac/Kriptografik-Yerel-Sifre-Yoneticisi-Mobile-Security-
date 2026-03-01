@@ -96,6 +96,11 @@ class DatabaseHelper {
     return rows.first['value'] as String;
   }
 
+  Future<void> clearAllEntries() async {
+    final db = await database;
+    await db.delete(_entriesTable);
+  }
+
   Future<void> deleteEntry(int id) async {
     final db = await database;
     await db.delete(
