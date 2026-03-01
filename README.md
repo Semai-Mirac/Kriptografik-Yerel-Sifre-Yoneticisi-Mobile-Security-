@@ -32,7 +32,7 @@ Uygulamanın güvenlik döngüsü şu şekilde tasarlanmıştır:
 - **☁️ Güvenli Bulut Yedekleme**: Google Drive'ın gizli uygulama klasörü (`appDataFolder`) kullanılarak, uçtan uca şifreli bulut senkronizasyonu.
 - **👆 Biyometrik Giriş Desteği (Local Auth)**: TouchID ve FaceID destekli giriş mekanizması.
 - **🏷️ Kategorizasyon Sistemi**: Arayüzde şifreleri filtreleme kolaylığı (Sosyal Medya, İş, Kişisel ve Diğer).
-- **🌍 Çoklu Dil Desteği (Localization)**: Birden fazla dilde kullanım imkanı.
+- **🌍 Çoklu Dil Desteği (Localization)**: Türkçe, İngilizce gibi birden fazla dilde kullanım imkanı (`flutter_localizations`).
 - **🎨 Animasyonlu Modern UI**: Eğlenceli geçişler, edge swipe mekanizmaları ve Borealis animasyonlu arka planları ile üstün kullanıcı deneyimi.
 
 ## 💻 Kullanılan Teknolojiler ve Entegrasyonlar
@@ -40,7 +40,7 @@ Uygulamanın güvenlik döngüsü şu şekilde tasarlanmıştır:
 Uygulama modern Flutter mimarisiyle, en hızlı ve güvenli kütüphaneler kullanılarak inşa edilmiştir:
 
 * **Çatı & Dil:** Flutter, Dart 3.x
-* **Veritabanı:** `sqflite` (İlişkisel lokal veri depolama)
+* **Veritabanı:** `sqflite` (İlişkisel lokal veri depolama), `path`
 * **Kriptografi Standartları:** 
   * `encrypt` (AES-256, CBC Modu için)
   * `crypto` (Güvenli Hashlemeler ve SHA-256 için)
@@ -48,7 +48,12 @@ Uygulama modern Flutter mimarisiyle, en hızlı ve güvenli kütüphaneler kulla
 * **Bulut & Yetkilendirme (Google):** 
   * `google_sign_in` (Google hesaplarına güvenli OAuth 2.0 girişi)
   * `googleapis` (Sürüş/Yedekleme API entegrasyonu)
+  * `http` (Ağ istekleri için)
 * **Tasarım:** `google_fonts`, Material 3 Tasarım Prensipleri, Edge Swipe paketleri ve özel UI widgetleri.
+* **Proje Yapısı:**
+  * `lib/screens`: Kullanıcı arayüzü ekranları (Giriş, Liste, Ekleme).
+  * `lib/helpers`: Veritabanı, güvenlik ve yedekleme yardımcı sınıfları.
+  * `lib/widgets`: Özel animasyonlu arka planlar ve bileşenler.
 
 ## 🛠️ Başlangıç ve Kurulum
 

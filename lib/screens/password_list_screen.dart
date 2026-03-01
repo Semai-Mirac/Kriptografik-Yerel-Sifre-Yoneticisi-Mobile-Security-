@@ -261,8 +261,8 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF0A1424),
-        title: Text(loc.t('confirmRestoreTitle') ?? 'Geri Yüklemeyi Onayla'),
-        content: Text(loc.t('confirmRestoreBody') ?? 'Varolan tüm şifreleriniz silinecek ve yedekteki şifreleriniz yüklenecek. Emin misiniz?'),
+        title: Text(loc.t('confirmRestoreTitle')),
+        content: Text(loc.t('confirmRestoreBody')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -303,7 +303,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  loc.t('restoreSuccess') ?? 'Yedek başarıyla geri yüklendi.',
+                  loc.t('restoreSuccess'),
                   style: const TextStyle(color: Color(0xFF4FE3C1), fontWeight: FontWeight.w500),
                 ),
               ),
@@ -327,7 +327,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  "${loc.t('restoreFailedPrefix') ?? 'Geri yükleme başarısız'}: $error",
+                  "${loc.t('restoreFailedPrefix')}: $error",
                   style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
                 ),
               ),
@@ -774,7 +774,7 @@ Future<void> _backupToCloud() async {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.cloud_download),
-                      tooltip: loc.t('restoreFromDrive') ?? 'Geri Yükle',
+                      tooltip: loc.t('restoreFromDrive'),
                     ),
                     IconButton(
                       onPressed: _isBackingUp ? null : _backupToCloud,
